@@ -1,0 +1,32 @@
+#!/bin/bash
+
+build() {
+
+    # Add modules for mounting (probably) used filesystems
+    add_module loop
+    add_module squashfs
+    add_module overlay
+
+    # Add module for real filesystem and fsck binaries (because autodetect can't detect the real one)
+    add_module ext4
+    add_binary fsck
+    add_binary fsck.ext4
+
+    add_runscript
+}
+
+help() {
+    cat << EOF
+This hook mounts the root filesystem according to the
+mount.bash file system if it exists.
+This makes it possible to use img files, squash-fs files and overlay-fs
+as the root folder.
+
+This might disable the autodetect hook's ability of detecting the real filesystem.
+It's assumed that this is ext4.
+If that's not the case, the necessary filesystem modules
+and fsck binaries have to be added manually.
+EOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:

@@ -1,0 +1,9 @@
+#!/usr/bin/ash
+
+run_latehook() {
+    
+    [ -x "/new_root/mount.sh" ] && sh /new_root/mount.sh
+
+}
+
+# vim: set ft=sh ts=4 sw=4 et:
