@@ -12,20 +12,25 @@ build() {
     add_binary fsck
     add_binary fsck.ext4
 
+    # Add binaries
+    add_binary date
+    add_binary mksquashfs
+
+    # Run script
     add_runscript
 }
 
 help() {
     cat << EOF
 This hook mounts the root filesystem according to the
-mount.bash file system if it exists.
+mount.sh file system if it exists.
 This makes it possible to use img files, squash-fs files and overlay-fs
 as the root folder.
 
 This might disable the autodetect hook's ability of detecting the real filesystem.
 It's assumed that this is ext4.
 If that's not the case, the necessary filesystem modules
-and fsck binaries have to be added manually.
+and fsck binaries have to be adapted or added manually.
 EOF
 }
 

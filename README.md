@@ -15,8 +15,11 @@ Those features can be selected as part of the boot options:
 |rootmnt_edit=1|Opens the shell script to do any custom configuration, "exit" continues boot|
 
 ## Installation:
-It requires the following options in /etc/mkinitcpio.conf:
-
-BINARIES=(/usr/bin/date /usr/bin/mksquashfs)
+The initcpio folder has to be merged into the one from the /etc folder and the /etc/mkinitcpio.conf needs the rootmnt hook at the end:
 
 HOOKS=(... rootmnt)
+
+### Info:
+I'm not responsible, if anything doesn't work. Please test it yourself properly before using it, as it might destroy your system.
+
+I'm using it myself for Arch-Linux with Syslinux boot loader. I haven't tested it yet on any other Linux distribution.
