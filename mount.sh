@@ -1,70 +1,80 @@
 #!/bin/sh
 cd "$(dirname "$0")"
+mkdir -p data overlay/upper overlay/work
 
-lowerdirs_loc=data/
-
-if [ ! -z ${rootmnt_backup+x} ] || [ -n "$rootmnt_backup_sum" ]; then
-  [ "$rootmnt_backup" != 1 ] && [ "$rootmnt_backup" != "" ] && custom_name="_$rootmnt_backup"
-  backup_folder="$lowerdirs_loc`date "+%F_%H-%M"`$custom_name"
+# Make a backup, if the flag is set - with the name as an additional suffix, if it's not "1"
+if [ -n "$rootmnt_backup" ]; then
+  backup_folder="data/$(date "+%F_%H-%M")"
+  [ "$rootmnt_backup" != 1 ] && backup_folder="_$rootmnt_backup"
   mkdir "$backup_folder"
-  if mksquashfs "overlay/upper" $backup_folder/root.sqfs; then
+  if mksquashfs "overlay/upper" "$backup_folder/root.sqfs"; then
+    # Keep the previous upper folder under upper.old - in case something went wrong
     rm -rf "overlay/upper.old"
-    mv overlay/"upper" overlay/"upper.old"
-    rm -r overlay/work
+    mv "overlay/upper" "overlay/upper.old"
+    rm -r "overlay/work"
   fi
 fi
 
-# Get and mount all the sqfs files
+# Get all the lowerdirs as root.sqfs files in folders of the data folder
 lowerdirs=
-for folder in $lowerdirs_loc*; do
+for folder in data/*; do
   umount "$folder" 2> /dev/null
-  sqfs=`ls "$folder"/*.sqfs 2> /dev/null`
-  if [ -f "$sqfs" ]; then
-    mount -o ro "$sqfs" "$folder"
-    lowerdirs=$folder:$lowerdirs
+  if [ -f "$folder/root.sqfs" ]; then
+    mount -o ro "$folder/root.sqfs" "$folder"
+    lowerdirs="$folder:$lowerdirs"
   fi
 done
+[ -z "$lowerdirs" ] && lowerdirs=data
 
 # Create overlay folders if they don't exist
-mkdir -p overlay/upper overlay/work
-
 if [ -n "$rootmnt_backup_sum" ]; then
   [ "$rootmnt_backup_sum" != 1 ] && custom_name="_$rootmnt_backup_sum"
-  backup_folder="`date "+%F_%H-%M"`$custom_name.all"
-  mkdir -p /tmp/mount /tmp/upper /tmp/work
-  mount -t overlay -o "lowerdir=${lowerdirs%:},upperdir=/tmp/upper,workdir=/tmp/work,noatime" overlay "/tmp/mount"
-  if mksquashfs "/tmp/mount" $backup_folder/root.sqfs; then
+  backup_folder="$(date "+%F_%H-%M")$custom_name.all"
+  mount_point="/tmp/root"
+  mkdir -p "$mount_point" /tmp/upper /tmp/work
+  mount -t overlay -o "lowerdir=${lowerdirs%:},upperdir=/tmp/upper,workdir=/tmp/work,noatime" overlay "$mount_point"
+  if mksquashfs "$mount_point" "$backup_folder/root.sqfs"; then
     umount "$mount_point"
-    umount $lowerdirs_loc*
+    umount data/*
     mkdir -p "backups"
-    mv $lowerdirs_loc* "backups/"
-    mv "$backup_folder" "$lowerdirs_loc"
-    mount "$backup_folder/root.sqfs" "$lowerdirs_loc$backup_folder"
-    lowerdirs="$lowerdirs_loc$backup_folder"
+    mv data/* "backups/"
+    mv "$backup_folder" "data/"
+    mount "$backup_folder/root.sqfs" "data/$backup_folder"
+    lowerdirs="data/$backup_folder"
   fi
 fi
 
-# Change the mount point to tmp if a manual file exists (for manual access)
-if [ ! -z ${rootmnt_edit+x} ]; then
-  mount_point="tmp"
+# Change the mount point to tmp if the flag is set (for manual access)
+if [ -n "$rootmnt_edit" ]; then
+  mount_point="/tmp/root"
   mkdir -p "$mount_point"
   mount -t overlay -o "lowerdir=${lowerdirs%:},upperdir=overlay/upper,workdir=overlay/work,noatime" overlay "$mount_point"
   sh
   cd "$(dirname "$0")"
   umount "$mount_point"
-  rm -r "$mount_point"
+  rm -d "$mount_point"
 fi
 
-if [ ! -z ${rootmnt_tmp+x} ]; then
-  # If variable is set, mount it in a temporary environment - all changes done here will be lost
-  rm -rf overlay/upper.tmp overlay/work.tmp
-  mkdir overlay/upper.tmp overlay/work.tmp
-  lowerdirs="overlay/upper:$lowerdirs"
-  mount -t overlay -o "lowerdir=${lowerdirs%:},upperdir=overlay/upper.tmp,workdir=overlay/work.tmp,noatime" overlay .
+if [ -n "$rootmnt_tmp" ]; then
+  if [ "$rootmnt_tmp" = "1" ]; then
+    # If variable is set to "1", mount it in a temporary environment - all changes done here will be lost on next tmp boot
+    tmp_folder="overlay/tmp"
+    rm -rf "$tmp_folder/upper" "$tmp_folder/work"
+    mkdir -p "$tmp_folder/upper" "$tmp_folder/work"
+    lowerdirs="overlay/upper:$lowerdirs"
+    mount -t overlay -o "lowerdir=${lowerdirs%:},upperdir=overlay/tmp/upper,workdir=overlay/tmp/work,noatime" overlay .
+  else
+    # If variable is set to something else mount in a temporary environment build on the last backup
+    tmp_folder="overlay/tmp/$rootmnt_tmp"
+    mkdir -p "$tmp_folder/upper" "$tmp_folder/work"
+    [ ! -f "$tmp_folder/lowerdirs" ] && echo -n ${lowerdirs} > "$tmp_folder/lowerdirs"
+    lowerdirs="$(cat "$tmp_folder/lowerdirs")"
+    mount -t overlay -o "lowerdir=${lowerdirs%:},upperdir=$tmp_folder/upper,workdir=$tmp_folder/work,noatime" overlay .
+  fi
 else
-  # Copy this file to the root folder (to also back up these changes)
-  this_file=`basename "$0"`
-  cp "$this_file" "/tmp/"
-  mount -t overlay -o "lowerdir=${lowerdirs%:},upperdir=overlay/upper,workdir=overlay/work,noatime" overlay .
-  diff "/tmp/$this_file" "`pwd`/root/$this_file" 2> /dev/null || cp "/tmp/$this_file" "`pwd`/root/$this_file"
+  # Copy this file to the root folder, if it's different (to also back up these changes)
+  filename="$(basename "$0")"
+  cp "$filename" "/tmp/"
+  mount -t overlay -o "lowerdir=${lowerdirs%:},upperdir=overlay/upper,workdir=overlay/work,noatime" overlay . || exit 1
+  diff "/tmp/$filename" "$(pwd)/root/$filename" 2> /dev/null || cp "/tmp/$filename" "$(pwd)/root/$filename"
 fi
