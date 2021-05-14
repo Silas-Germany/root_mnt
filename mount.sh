@@ -1,11 +1,11 @@
 #!/bin/sh
 cd "$(dirname "$0")"
-mkdir -p data overlay/upper overlay/work
+mkdir -p data
 
 # Make a backup, if the flag is set - with the name as an additional suffix, if it's not "1"
 if [ -n "$rootmnt_backup" ]; then
-  backup_folder="data/$(date "+%F_%H-%M")"
-  [ "$rootmnt_backup" != 1 ] && backup_folder="_$rootmnt_backup"
+  [ "$rootmnt_backup" != 1 ] && custom_name="_$rootmnt_backup"
+  backup_folder="data/$(date "+%F_%H-%M")$custom_name"
   mkdir "$backup_folder"
   if mksquashfs "overlay/upper" "$backup_folder/root.sqfs"; then
     # Keep the previous upper folder under upper.old - in case something went wrong
@@ -14,6 +14,8 @@ if [ -n "$rootmnt_backup" ]; then
     rm -r "overlay/work"
   fi
 fi
+
+mkdir -p overlay/upper overlay/work
 
 # Get all the lowerdirs as root.sqfs files in folders of the data folder
 lowerdirs=
@@ -29,7 +31,7 @@ done
 # Create overlay folders if they don't exist
 if [ -n "$rootmnt_backup_sum" ]; then
   [ "$rootmnt_backup_sum" != 1 ] && custom_name="_$rootmnt_backup_sum"
-  backup_folder="$(date "+%F_%H-%M")$custom_name.all"
+  backup_folder="data/$(date "+%F_%H-%M")$custom_name.all"
   mount_point="/tmp/root"
   mkdir -p "$mount_point" /tmp/upper /tmp/work
   mount -t overlay -o "lowerdir=${lowerdirs%:},upperdir=/tmp/upper,workdir=/tmp/work,noatime" overlay "$mount_point"
