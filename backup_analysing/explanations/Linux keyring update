@@ -1,0 +1,14 @@
+/etc/pacman.d/gnupg/gpg-agent.conf
+/etc/pacman.d/gnupg/gpg.conf
+/etc/pacman.d/gnupg/.gpg-v21-migrated
+/etc/pacman.d/gnupg/openpgp-revocs.d/.*
+/etc/pacman.d/gnupg/private-keys-v1.d/.*
+/etc/pacman.d/gnupg/pubring.gpg
+/etc/pacman.d/gnupg/pubring.gpg~
+/etc/pacman.d/gnupg/secring.gpg
+/etc/pacman.d/gnupg/S.gpg-agent
+/etc/pacman.d/gnupg/S.gpg-agent.browser
+/etc/pacman.d/gnupg/S.gpg-agent.extra
+/etc/pacman.d/gnupg/S.gpg-agent.ssh
+/etc/pacman.d/gnupg/tofu.db
+/etc/pacman.d/gnupg/trustdb.gpg

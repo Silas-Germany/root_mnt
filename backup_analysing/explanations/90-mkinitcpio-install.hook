@@ -1,0 +1,3 @@
+/boot/initramfs-linux-fallback.img
+/boot/initramfs-linux.img
+/boot/vmlinuz-linux

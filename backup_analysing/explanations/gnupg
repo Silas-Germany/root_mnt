@@ -1,0 +1,6 @@
+/root/.gnupg/crls.d/DIR.txt
+/etc/systemd/user/sockets.target.wants/dirmngr.socket
+/etc/systemd/user/sockets.target.wants/gpg-agent-browser.socket
+/etc/systemd/user/sockets.target.wants/gpg-agent-extra.socket
+/etc/systemd/user/sockets.target.wants/gpg-agent.socket
+/etc/systemd/user/sockets.target.wants/gpg-agent-ssh.socket

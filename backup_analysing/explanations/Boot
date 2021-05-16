@@ -1,0 +1,17 @@
+/etc/ld.so.cache
+/etc/machine-id
+/etc/.pwd.lock
+/etc/.updated
+/var/cache/ldconfig/aux-cache
+/var/lib/systemd/backlight/pci-0000:00:01.0:backlight:radeon_bl0
+/var/lib/systemd/catalog/database
+/var/lib/systemd/random-seed
+/var/lib/systemd/rfkill/pci-0000:00:13.0-usb-0:1.2:1.0:bluetooth
+/var/lib/systemd/rfkill/pci-0000:00:14.3-platform-VPC2004:00:bluetooth
+/var/lib/systemd/rfkill/pci-0000:00:14.3-platform-VPC2004:00:wlan
+/var/lib/systemd/rfkill/pci-0000:04:00.0:wlan
+/var/lib/systemd/timers/stamp-shadow.timer
+/var/log/journal/d6af95d0d4024015bfb1eda7346fc572/system.journal
+/var/log/lastlog
+/var/log/wtmp
+/var/.updated

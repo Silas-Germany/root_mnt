@@ -1,0 +1,2 @@
+/etc/ssl/certs/.*
+/etc/ca-certificates/extracted/.*

@@ -1,0 +1,9 @@
+/etc/.pwd.lock
+/etc/group
+/etc/group-
+/etc/gshadow
+/etc/gshadow-
+/etc/passwd
+/etc/passwd-
+/etc/shadow
+/etc/shadow-
