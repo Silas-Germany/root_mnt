@@ -7,13 +7,11 @@ mksquashfs_options="-mem 7G -noappend -comp xz -xattrs -exit-on-error"
 # Make a backup, if the flag is set - with the name as an additional suffix, if it's not "1"
 if [ -n "$rootmnt_backup" -o -n "$rootmnt_backup_sum" ]; then
   [ "$rootmnt_backup" != 1 -a -n "$rootmnt_backup" ] && custom_name="_$rootmnt_backup"
+  [ "$rootmnt_backup_sum" != 1 -a -n "$rootmnt_backup_sum" ] && custom_name="_$rootmnt_backup_sum"
   backup_folder="data/$(date -u "+%F_%H-%M")$custom_name"
   mkdir "$backup_folder"
   if mksquashfs "overlay/upper" "$backup_folder/root.sqfs" $mksquashfs_options; then
-    # Keep the previous upper folder under upper.old - in case something went wrong
-    rm -rf "overlay/upper.old"
-    mv "overlay/upper" "overlay/upper.old"
-    rm -r "overlay/work"
+    rm -rf "overlay/upper" "overlay/work"
   fi
 fi
 
