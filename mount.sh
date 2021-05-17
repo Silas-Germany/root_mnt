@@ -5,8 +5,8 @@ mkdir -p data
 mksquashfs_options="-mem 7G -noappend -comp xz -xattrs -exit-on-error"
 
 # Make a backup, if the flag is set - with the name as an additional suffix, if it's not "1"
-if [ -n "$rootmnt_backup" ]; then
-  [ "$rootmnt_backup" != 1 ] && custom_name="_$rootmnt_backup"
+if [ -n "$rootmnt_backup" -o -n "$rootmnt_backup_sum" ]; then
+  [ "$rootmnt_backup" != 1 -a -n "$rootmnt_backup" ] && custom_name="_$rootmnt_backup"
   backup_folder="data/$(date -u "+%F_%H-%M")$custom_name"
   mkdir "$backup_folder"
   if mksquashfs "overlay/upper" "$backup_folder/root.sqfs" $mksquashfs_options; then
@@ -33,9 +33,9 @@ done
 # Create overlay folders if they don't exist
 if [ -n "$rootmnt_backup_sum" ]; then
   [ "$rootmnt_backup_sum" != 1 ] && custom_name="_$rootmnt_backup_sum"
-  backup_folder="data/$(date -u "+%F_%H-%M")$custom_name.all"
+  backup_folder="$(date -u "+%F_%H-%M")$custom_name.all"
   mount_point="/tmp/root"
-  mkdir -p "$mount_point" /tmp/upper /tmp/work
+  mkdir -p "$backup_folder" "$mount_point" /tmp/upper /tmp/work
   mount -t overlay -o "lowerdir=${lowerdirs%:},upperdir=/tmp/upper,workdir=/tmp/work,noatime,metacopy=on" overlay "$mount_point"
   if mksquashfs "$mount_point" "$backup_folder/root.sqfs" $mksquashfs_options; then
     umount "$mount_point"
@@ -43,7 +43,7 @@ if [ -n "$rootmnt_backup_sum" ]; then
     mkdir -p "backups"
     mv data/* "backups/"
     mv "$backup_folder" "data/"
-    mount "$backup_folder/root.sqfs" "data/$backup_folder"
+    mount "data/$backup_folder/root.sqfs" "data/$backup_folder"
     lowerdirs="data/$backup_folder"
   fi
 fi
