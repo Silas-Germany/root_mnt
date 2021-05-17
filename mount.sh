@@ -2,12 +2,14 @@
 cd "$(dirname "$0")"
 mkdir -p data
 
+mksquashfs_options="-mem 7G -noappend -comp xz -xattrs -exit-on-error"
+
 # Make a backup, if the flag is set - with the name as an additional suffix, if it's not "1"
 if [ -n "$rootmnt_backup" ]; then
   [ "$rootmnt_backup" != 1 ] && custom_name="_$rootmnt_backup"
   backup_folder="data/$(date -u "+%F_%H-%M")$custom_name"
   mkdir "$backup_folder"
-  if mksquashfs "overlay/upper" "$backup_folder/root.sqfs"; then
+  if mksquashfs "overlay/upper" "$backup_folder/root.sqfs" $mksquashfs_options; then
     # Keep the previous upper folder under upper.old - in case something went wrong
     rm -rf "overlay/upper.old"
     mv "overlay/upper" "overlay/upper.old"
@@ -35,7 +37,7 @@ if [ -n "$rootmnt_backup_sum" ]; then
   mount_point="/tmp/root"
   mkdir -p "$mount_point" /tmp/upper /tmp/work
   mount -t overlay -o "lowerdir=${lowerdirs%:},upperdir=/tmp/upper,workdir=/tmp/work,noatime,metacopy=on" overlay "$mount_point"
-  if mksquashfs "$mount_point" "$backup_folder/root.sqfs"; then
+  if mksquashfs "$mount_point" "$backup_folder/root.sqfs" $mksquashfs_options; then
     umount "$mount_point"
     umount data/*
     mkdir -p "backups"
@@ -78,5 +80,5 @@ else
   filename="$(basename "$0")"
   cp "$filename" "/tmp/"
   mount -t overlay -o "lowerdir=${lowerdirs%:},upperdir=overlay/upper,workdir=overlay/work,noatime,metacopy=on" overlay . || exit 1
-  diff "/tmp/$filename" "$(pwd)/root/$filename" 2> /dev/null || cp "/tmp/$filename" "$(pwd)/root/$filename"
+  diff -q "/tmp/$filename" "$(pwd)/root/$filename" 2> /dev/null || cp "/tmp/$filename" "$(pwd)/root/$filename"
 fi
