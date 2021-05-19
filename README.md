@@ -19,6 +19,8 @@ The initcpio folder has to be merged into the one from the /etc folder and the /
 
 HOOKS=(... rootmnt)
 
+It can be applied with the following command:
+diff -ruN --color old new | patch -p1 -d /
 ### Info:
 I'm not responsible, if anything doesn't work. Please test it yourself properly before using it, as it might destroy your system.
 
