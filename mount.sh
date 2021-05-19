@@ -2,7 +2,7 @@
 cd "$(dirname "$0")"
 mkdir -p data
 
-mksquashfs_options="-mem 7G -noappend -comp xz -xattrs -exit-on-error"
+mksquashfs_options="-mem 5500M -noappend -comp xz -xattrs -exit-on-error"
 
 # Make a backup, if the flag is set - with the name as an additional suffix, if it's not "1"
 if [ -n "$rootmnt_backup" -o -n "$rootmnt_backup_sum" ]; then
@@ -12,6 +12,8 @@ if [ -n "$rootmnt_backup" -o -n "$rootmnt_backup_sum" ]; then
   mkdir "$backup_folder"
   if mksquashfs "overlay/upper" "$backup_folder/root.sqfs" $mksquashfs_options; then
     rm -rf "overlay/upper" "overlay/work"
+  else
+    rm -rf $backup_folder
   fi
 fi
 
@@ -43,6 +45,8 @@ if [ -n "$rootmnt_backup_sum" ]; then
     mv "$backup_folder" "data/"
     mount "data/$backup_folder/root.sqfs" "data/$backup_folder"
     lowerdirs="data/$backup_folder"
+  else
+    rm -rf $backup_folder
   fi
 fi
 
