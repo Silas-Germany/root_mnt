@@ -6,8 +6,9 @@
 # Save files:
 mkdir -p mount
 mount -o ro root.sqfs mount
-find mount -type b,p,f,l,s \
-    | sed "s:mount/::" \
+find mount -type b,p,f,l,s -printf "%k %p\n" \
+    | grep -v '^[0-4] ' \
+    | sed "s:[0-9]* *mount/::" \
     | sort -u \
     > /tmp/f1
 
