@@ -1,8 +1,26 @@
 #!/bin/sh
+
 cd "$(dirname "$0")"
 mkdir -p data
 
 mksquashfs_options="-mem 5500M -noappend -comp xz -xattrs -exit-on-error"
+
+# Make a backup, if the flag is set - with the name as an additional suffix, if it's not "1"
+function backup() {
+  custom_name="$1"
+  backup_folder="data/$(date -u "+%F_%H-%M")"
+  if [ "$custom_name" != 1 ]; then
+    backup_folder="${backup_folder}_$custom_name"
+  fi
+  if mksquashfs overlay/upper tmp/root.sqfs $mksquashfs_options; then
+    mkdir -p "$backup_folder"
+    mv tmp/root.sqfs "$backup_folder"
+    mv "tmp/$backup_folder" "$backup_folder"
+    rm -rf overlay/upper overlay/work
+  else
+    rm -rf "$backup_folder"
+  fi
+}
 
 # Make a backup, if the flag is set - with the name as an additional suffix, if it's not "1"
 if [ -n "$rootmnt_backup" -o -n "$rootmnt_backup_sum" ]; then
