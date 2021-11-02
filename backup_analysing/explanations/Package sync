@@ -1,1 +1,4 @@
-/var/lib/pacman/sync/.*
+etc/.pwd.lock
+etc/.updated
+var/lib/pacman/sync/.*
+var/.updated

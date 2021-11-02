@@ -1,2 +1,2 @@
-/etc/ld.so.cache
-/var/cache/ldconfig/aux-cache
+etc/ld.so.cache
+var/cache/ldconfig/aux-cache

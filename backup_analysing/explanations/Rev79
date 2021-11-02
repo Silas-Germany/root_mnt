@@ -1,0 +1,8 @@
+home/silas/.cache/yarn/.*
+home/silas/.config/gcloud/.*
+home/silas/.config/JetBrains/RubyMine.*
+home/silas/.java/.userPrefs/.*
+home/silas/.local/share/JetBrains/RubyMine.*
+home/silas/.yarnrc
+home/silas/Desktop/work
+home/silas/rev79/.*

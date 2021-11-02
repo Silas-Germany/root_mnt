@@ -15,4 +15,10 @@ if [ -n "$1" ]; then
   exit
 fi
 
-grep -vE "^$(cat explanations/* | grep -vE "^ *#|^$" | tr '\n' '|' | sed 's/|/$|^/g' | sed 's/|$//')$" file_changes || echo Nothing Missing
+if [ -t 1 ];then
+  out=less
+else
+  out=cat
+fi
+
+(grep -vE "^$(cat explanations/* | grep -vE "^ *#|^$" | tr '\n' '|' | sed 's/|/$|^/g' | sed 's/|$//')$" file_changes || echo Nothing Missing) | $out

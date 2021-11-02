@@ -2,7 +2,7 @@
 
 [ -d explanations -o -d ../explanations ] || mkdir explanations
 [ -d explanations ] || cd ..
-ln -s ../../explanations/ templates
+ln -sf ../../explanations/ templates
 
 # Save files:
 mkdir -p mount
@@ -16,11 +16,12 @@ find mount -type b,p,f,l,s -printf "%k %p\n" \
 # List installed / updated package files:
 echo "# "$(for p in mount/var/lib/pacman/local/*/desc; do
   head -n 2 $p | tail -n 1
-done) > explanations/pkgs 2> /dev/null
+done 2> /dev/null) > explanations/pkgs
 
 for files in mount/var/lib/pacman/local/*/files; do
   cat $files
 done \
+    2> /dev/null \
     | sort -u \
     > /tmp/f2
 umount mount

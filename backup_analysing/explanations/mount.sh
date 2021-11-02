@@ -1,1 +1,1 @@
-/root/mount.sh
+root/mount.sh
