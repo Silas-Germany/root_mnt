@@ -1,9 +1,120 @@
 #!/usr/bin/ash
 
-run_latehook() {
-    
-    [ -x "/new_root/mount.sh" ] && sh /new_root/mount.sh
+run_hook() {
+    export mount_handler="rootmnt_mount_handler"
+}
 
+
+rootmnt_mount_handler() {
+    local _newroot="${1}"
+
+    # Mount the base
+    mkdir -p /run/rootmnt/base
+    mount /dev/mapper/root /run/rootmnt/base
+    cd /run/rootmnt/base
+
+    # Setup the lower dirs
+    local _lowerdirs=$(_handle_lowerdirs)
+
+    # Make backup if requested
+    [ -n "$rootmnt_backup" ] && _make_backup "$rootmnt_backup"
+
+    # Make sum-backup if requested
+    if [ -n "$rootmnt_backup_sum" ]; then
+        local _sum_name
+        [ "$rootmnt_backup_sum" == "1" ] && _sum_name="sum" || _sum_name="${rootmnt_backup_sum}_sum"
+        _mount_overlay "/run/rootmnt/base/overlay/upper" "$_lowerdirs"
+        rm -rf data.old
+        mv data data.old
+        mkdir data
+        if _make_backup "$_sum_name"; then
+            umount ../data/*
+            rm -d ../data/*
+            _lowerdirs=$(_handle_lowerdirs)
+        else
+            rm -rf data
+            mv data.old data
+        fi
+    fi
+ 
+    # Give access to a shell if requested
+    if [ -n "$rootmnt_edit" ]; then
+        local _edit_mount_point="/tmp/root"
+
+        mkdir -p "$_edit_mount_point"
+        _mount_overlay "$_edit_mount_point" "$_lowerdirs"
+        sh
+        cd /run/rootmnt/base
+        umount "$_edit_mount_point"
+        rm -d "$_edit_mount_point"
+    fi
+
+    # Create a temp environment if requested
+    if [ -n "$rootmnt_tmp" ]; then
+        local _tmp_folder="overlay/tmp/$rootmnt_tmp"
+
+        # An "1" means, that this environment gets deleted next time - any other can be accessed again as long as the kernel version doesn't change
+        if [ "$rootmnt_tmp" = "1" ]; then
+            rm -rf "$_tmp_folder/upper" "$_tmp_folder/work"
+            mkdir -p "$_tmp_folder/upper" "$_tmp_folder/work"
+            _lowerdirs="overlay/upper:$_lowerdirs"
+        else
+            mkdir -p "$_tmp_folder/upper" "$_tmp_folder/work"
+            [ ! -f "$_tmp_folder/lowerdirs" ] && echo -n ${_lowerdirs} > "$_tmp_folder/lowerdirs"
+            _lowerdirs="$(cat "$_tmp_folder/lowerdirs")"
+        fi
+        _mount_overlay "$_newroot" "$_lowerdirs" "$_tmp_folder"
+    else
+        _mount_overlay "$_newroot" "$_lowerdirs"
+    fi
+}
+
+# This mounts the lowerdirs and returns the _lowerdirs variable in stdout
+_handle_lowerdirs() {
+    mkdir -p data
+    local _lowerdirs=
+    local _i=0
+    for folder in data/*; do
+      umount "$folder" 2> /dev/null
+      if [ -f "$folder/root.sqfs" ]; then
+        _i=$((_i+1))
+        mkdir -p "../data/$_i"
+        mount -o ro "$folder/root.sqfs" "../data/$_i"
+        _lowerdirs="../data/$_i:$_lowerdirs"
+      fi  
+    done
+    [ -z "$_lowerdirs" ] && _lowerdirs="../data"
+    echo ${_lowerdirs%:}
+}
+
+# creates a backup of the upper folder, it takes the name as parameter, an "1" means no name
+_make_backup() {
+    local _name="_${1}"
+    [ "$_name" == "_1" ] && _name=
+
+    local _mksquashfs_options="-mem 5500M -noappend -comp xz -xattrs -exit-on-error"
+    local _backup_folder="data/$(date -u "+%F_%H-%M")$_name"
+
+    mkdir "$_backup_folder"
+    if mksquashfs "overlay/upper" "$_backup_folder/root.sqfs" $_mksquashfs_options; then
+        rm -rf "overlay/upper" "overlay/work"
+        return true
+    else
+        rm -rf $_backup_folder
+        return false
+    fi
+}
+
+# This mounts the overlay, it takes the target mount point, the lowerdirs and optionally an overlay-dir as parameters
+_mount_overlay() {
+    local _mount_point="${1}"
+    local _lowerdirs="${2}"
+    local _overlay_dir="${3}"
+    [ -z "$_overlay_dir" ] && _overlay_dir="overlay"
+
+    mkdir -p "$_overlay_dir/upper" "$_overlay_dir/work"
+    echo mount -t overlay -o "lowerdir=$_lowerdirs,upperdir=$_overlay_dir/upper,workdir=$_overlay_dir/work,noatime,metacopy=on" overlay "$_mount_point"
+    mount -t overlay -o "lowerdir=$_lowerdirs,upperdir=$_overlay_dir/upper,workdir=$_overlay_dir/work,noatime,metacopy=on" overlay "$_mount_point"
 }
 
 # vim: set ft=sh ts=4 sw=4 et:
