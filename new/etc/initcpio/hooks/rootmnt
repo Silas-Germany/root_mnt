@@ -13,11 +13,11 @@ rootmnt_mount_handler() {
     mount /dev/mapper/root /run/rootmnt/base
     cd /run/rootmnt/base
 
-    # Setup the lower dirs
-    local _lowerdirs=$(_handle_lowerdirs)
-
     # Make backup if requested
     [ -n "$rootmnt_backup" ] && _make_backup "$rootmnt_backup"
+
+    # Setup the lower dirs
+    local _lowerdirs=$(_handle_lowerdirs)
 
     # Make sum-backup if requested
     if [ -n "$rootmnt_backup_sum" ]; then
@@ -96,12 +96,14 @@ _make_backup() {
     local _backup_folder="data/$(date -u "+%F_%H-%M")$_name"
 
     mkdir "$_backup_folder"
+    echo mksquashfs "overlay/upper" "$_backup_folder/root.sqfs" $_mksquashfs_options
     if mksquashfs "overlay/upper" "$_backup_folder/root.sqfs" $_mksquashfs_options; then
-        rm -rf "overlay/upper" "overlay/work"
-        return true
+        rm -rf "overlay/upper.old" "overlay/work"
+        mv overlay/upper overlay/upper.old
+        return 0
     else
         rm -rf $_backup_folder
-        return false
+        return 1
     fi
 }
 
