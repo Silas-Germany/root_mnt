@@ -19,7 +19,7 @@ rootmnt_mount_handler() {
     # Setup the lower dirs
     local _lowerdirs=$(_handle_lowerdirs)
 
-    # Make sum-backup if requested
+    # Make sum-backup if requested (= one backup for all changes up to now)
     if [ -n "$rootmnt_backup_sum" ]; then
         local _sum_name
         [ "$rootmnt_backup_sum" == "1" ] && _sum_name="sum" || _sum_name="${rootmnt_backup_sum}_sum"
@@ -29,12 +29,13 @@ rootmnt_mount_handler() {
         mkdir data
         if _make_backup "$_sum_name"; then
             umount ../data/*
-            rm -d ../data/*
+            rmdir ../data/*
             _lowerdirs=$(_handle_lowerdirs)
         else
             rm -rf data
             mv data.old data
         fi
+        umount /run/rootmnt/base/overlay/upper
     fi
  
     # Give access to a shell if requested
@@ -43,6 +44,7 @@ rootmnt_mount_handler() {
 
         mkdir -p "$_edit_mount_point"
         _mount_overlay "$_edit_mount_point" "$_lowerdirs"
+        cd ..
         sh
         cd /run/rootmnt/base
         umount "$_edit_mount_point"
