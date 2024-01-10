@@ -10,6 +10,7 @@ rootmnt_mount_handler() {
 
     # Mount the base
     mkdir -p /run/rootmnt/base
+    umount /run/rootmnt/base 2> /dev/null
     mount /dev/mapper/root /run/rootmnt/base
     cd /run/rootmnt/base
 
@@ -48,7 +49,7 @@ rootmnt_mount_handler() {
         sh
         cd /run/rootmnt/base
         umount "$_edit_mount_point"
-        rm -d "$_edit_mount_point"
+        rmdir "$_edit_mount_point"
     fi
 
     # Create a temp environment if requested
@@ -71,12 +72,12 @@ rootmnt_mount_handler() {
     fi
 
     # If a file to mount excluded folders exists, execute it with the root-location as parameter
-    [ -x ./rootmnt_excluded/mount.sh ] ./rootmnt_excluded/mount.sh "$_newroot"
+    [ -x ./rootmnt_excluded/mount.sh ] && ./rootmnt_excluded/mount.sh "$_newroot"
 }
 
 # This mounts the lowerdirs and returns the _lowerdirs variable in stdout
 _handle_lowerdirs() {
-    mkdir -p data
+    mkdir -p data ../data
     local _lowerdirs=
     local _i=0
     for folder in data/*; do
